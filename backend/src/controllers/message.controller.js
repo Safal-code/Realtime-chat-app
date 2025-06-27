@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import Message from "../models/Message.js";
 import cloudinary from "../lib/cloudinary.js";
-import { getRecieverSocketId,io } from "../lib/socket.js";
+import { getReceiverSocketId,io } from "../lib/socket.js";
 
 //get user on sidebar except logged-in user
 export async function getUsersForSidebar(req,res) {
@@ -25,14 +25,14 @@ export async function getMessages(req,res) {
         //we would also like to find all messages between both of us
         const messages = await Message.find({                 //find all messages where i am sender or the other user is sender
             $or:[                                                //filter 
-                {senderId:myId,recieverId:userToChatId},
-                {senderId:userToChatId,recieverId:myId}
+                {senderId:myId,receiverId:userToChatId},
+                {senderId:userToChatId,receiverId:myId}
             ]
         })
 
         res.status(200).json(messages);
     }catch(error){
-        console.log("Error in getMessages controller:",error);
+        console.log("Error in getMessages controller:",error.message);
         res.status(500).json({error:"Internal server error"});
     }
 };
@@ -41,7 +41,7 @@ export async function getMessages(req,res) {
 export async function sendMessage(req,res){
     try{
         const{text,image}=req.body;
-        const{id:recieverId}=req.params;
+        const{id:receiverId}=req.params;
         const senderId=req.user._id;      //senderId is me
 
         //in case user sends img in mssg
@@ -53,7 +53,7 @@ export async function sendMessage(req,res){
 
         const newMessage = new Message({
             senderId,                          //it is us
-            recieverId,
+            receiverId,
             text,
             image:imageUrl,
         });
@@ -61,9 +61,9 @@ export async function sendMessage(req,res){
         await newMessage.save();
 
         //REALTIME FUNCTIONALITY USING SOCKET.IO
-        const recieverSocketId = getRecieverSocketId(recieverId);
-        if(recieverSocketId){
-            io.to(recieverSocketId).emit("newMessage",newMessage); //.to ensure mssg only go to reciever not broadcasted to everyone
+        const receiverSocketId = getReceiverSocketId(receiverId);
+        if(receiverSocketId){
+            io.to(receiverSocketId).emit("newMessage",newMessage); //.to ensure mssg only go to reciever not broadcasted to everyone
             
         }
 
