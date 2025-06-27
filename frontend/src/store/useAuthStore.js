@@ -18,7 +18,7 @@ export const useAuthStore = create((set, get) => ({
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check"); //call axios fun() half url cause it already defined base in axios.js file
-      set({ authUser: res.data.user }); //set the auth user state with res data
+      set({ authUser: res.data }); //set the auth user state with res data
       get().connectSocket(); //make online user if page refreshed
     } catch (error) {
       console.log("Error in checkAuth:", error);
